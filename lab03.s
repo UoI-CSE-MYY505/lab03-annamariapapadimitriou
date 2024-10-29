@@ -102,5 +102,36 @@ rgb888_to_rgb565:
 # Write your code here.
 # You may move the "return" instruction (jalr zero, ra, 0).
     jalr zero, ra, 0
+     mul  a4, a2,   a1 # size of the image in pixels (width * height)
+loopConversion: 
+    beq  a4, zero, returnConversion # return result when all the pixels were converted
+    lbu  t0, 0(a0) # get red
+    lbu  t1, 1(a0) # get green
+    lbu  t2, 2(a0) # get blue
+    
+    andi t0, t0,   0xf8  #mask red with 11111000
+    andi t4, t1,   0xe0  #mask green with 11100000
+    andi t3, t1,   0x1c  #mask green with 00011100
+    # no need for blue mask
+    
+    srli t4, t4,   5    # shift first half of green right by 5
+    slli t3, t3,   3    # shift second half of green left by 3
+    srli t2, t2,   3    # shift blue right by 3
+    
+    or   t4, t4,   t0   # make first byte with red and 3 msb of green
+    or   t3, t3,   t2   # make second byte with 3 lsb of green and blue
+
+    sw   t3, 0(a3)      # save at first half of pixel
+    addi a3, a3,   1    # move on to the next half of pixel
+    
+    sw   t4, 0(a3)      # save at second half of pixel
+    addi a3, a3,   1    # move on to the next image pixel
+    
+    addi a0, a0,   3    # move on to the next image pixel on unconverted image
+    addi a4, a4,   -1   # decrement pixel counter
+    j    loopConversion
+returnConversion:
+    jalr zero, ra, 0
+
 
 
